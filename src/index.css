@@ -128,3 +128,39 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+.price-up {
+  animation: price-up-animation 2s;
+}
+
+.price-down {
+  animation: price-down-animation 2s;
+}
+
+@keyframes price-up-animation {
+  0% {
+    color: white;
+  }
+
+  50% {
+    color: oklch(0.723 0.219 149.579);
+  }
+
+  100% {
+    color: white;
+  }
+}
+
+@keyframes price-down-animation {
+  0% {
+    color: white;
+  }
+
+  50% {
+    color: #fb2c36;
+  }
+
+  100% {
+    color: white;
+  }
+}

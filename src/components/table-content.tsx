@@ -1,109 +1,85 @@
-import { TickerData } from "@/@types/services/get-crypto";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { getCryptos } from "@/services/get-cryptos";
-import { useQuery } from "@tanstack/react-query";
-import { ColumnDef, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import { MessageTicker24h, Ticker24hr } from "@/@types/components/table-content";
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 import { EllipsisIcon } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { Checkbox } from "./ui/checkbox";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 
+type Ticker24hKey = { [key: string]: Ticker24hr }
 
 export function TableContent() {
-
-  const { data: getCryptosQuery } = useQuery<TickerData[] | null>({
-    queryKey: ['get-cryptos'],
-    queryFn: async () => {
-      return getCryptos(["BTCUSDT", "ETHUSDT", "SOLUSDT"])
-    },
-    initialData: []
+  const currentCryptoStateRef = useRef<{ updated: Ticker24hKey, old: Ticker24hKey }>({
+    updated: {},
+    old: {},
   })
+  const [currentCrypto, setCurrentCryptoState] = useState<Ticker24hKey>({})
 
-  const columns: ColumnDef<TickerData>[] = [
-    {
-      id: "delete",
-      header: () => {
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger>
-              <EllipsisIcon className="size-5" />
+  useEffect(() => {
+    const socket = new WebSocket("wss://stream.binance.com:9443/stream?streams=btcusdt@ticker/ethusdt@ticker/solusdt@ticker")
 
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem className="text-center justify-center items-center">Apagar</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )
-      },
-      cell: () => {
-        return (
-          <Checkbox />
-        )
-      }
-    },
-    { accessorKey: "symbol", header: "Nome" },
-    {
-      accessorKey: "lastPrice",
-      header: "Preço",
-      cell: ({ row }) => {
-        const price = new Intl.NumberFormat("en-US", {
-          style: "currency",
-          currency: "USD",
-        }).format(row.getValue("lastPrice"))
+    socket.onopen = (data) => {
+      console.log('connected: ', data)
+    }
 
-        return price
-      }
-    },
-    { accessorKey: "priceChangePercent", header: "24 %" }
-  ]
+    socket.onmessage = async (message: MessageEvent<MessageTicker24h>) => {
+      const data = JSON.parse(String(message.data))
+      currentCryptoStateRef.current.updated[data.stream] = data.data
+    }
 
-  const table = useReactTable({
-    data: getCryptosQuery || [],
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-  })
+    const interval = setInterval(() => {
+      setCurrentCryptoState(prev => {
+        currentCryptoStateRef.current.old = { ...prev }
+        return { ...currentCryptoStateRef.current.updated }
+      })
+
+      return () => clearInterval(interval);
+    }, 6000);
+
+    return () => {
+      socket.close()
+    }
+
+  }, [])
 
   return (
     <Table>
+      <TableCaption>Criptomoedas salvas</TableCaption>
+
       <TableHeader>
-        {table.getHeaderGroups().map((headerGroup) => (
-          <TableRow key={headerGroup.id}>
-            {headerGroup.headers.map((header) => {
-              return (
-                <TableHead key={header.id}>
-                  {header.isPlaceholder
-                    ? null
-                    : flexRender(
-                      header.column.columnDef.header,
-                      header.getContext()
-                    )}
-                </TableHead>
-              )
-            })}
-          </TableRow>
-        ))}
+        <TableRow>
+          <TableHead><EllipsisIcon /></TableHead>
+          <TableHead>Nome</TableHead>
+          <TableHead>Preço</TableHead>
+          <TableHead>24 %</TableHead>
+        </TableRow>
       </TableHeader>
+
       <TableBody>
-        {table.getRowModel().rows?.length ? (
-          table.getRowModel().rows.map((row) => (
-            <TableRow
-              key={row.id}
-              data-state={row.getIsSelected() && "selected"}
-            >
-              {row.getVisibleCells().map((cell) => (
-                <TableCell key={cell.id}>
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+        {
+          Object.values(currentCrypto).map((crypto, i) => {
+            const oldPrice = currentCryptoStateRef.current.old[Object.keys(currentCrypto)[i]]?.c
+            return (
+              <TableRow key={`${crypto.s}-${crypto.c}`}>
+                <TableCell><Checkbox /></TableCell>
+                <TableCell>{crypto.s}</TableCell>
+                <TableCell className={cn({
+                  "price-up": crypto.c > oldPrice,
+                  "price-down": crypto.c < oldPrice
+                })}>
+                  {new Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: 'USD'
+                  }).format(Number(crypto.c))}
                 </TableCell>
-              ))}
-            </TableRow>
-          ))
-        ) : (
-          <TableRow>
-            <TableCell colSpan={columns.length} className="h-24 text-center">
-              No results.
-            </TableCell>
-          </TableRow>
-        )}
+                <TableCell className={cn({
+                  "text-red-500": crypto.P < 0,
+                  "text-green-500": crypto.P > 0,
+                })}>{crypto.P}</TableCell>
+              </TableRow>
+            )
+          })
+        }
       </TableBody>
-    </Table>
+    </Table >
   )
 }
