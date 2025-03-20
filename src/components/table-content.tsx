@@ -6,7 +6,7 @@ import { Checkbox } from "./ui/checkbox";
 
 
 export function TableContent() {
-  const { addedCryptos, addedCryptosRef } = useAppData()
+  const { addedCryptos, oldAddedCryptosPriceRef } = useAppData()
 
   return (
     <Table>
@@ -24,7 +24,7 @@ export function TableContent() {
       <TableBody>
         {
           Object.values(addedCryptos).map((crypto, i) => {
-            const oldPrice = addedCryptosRef.current[Object.keys(addedCryptos)[i]]?.c
+            const oldPrice = oldAddedCryptosPriceRef.current[i]
             return (
               <TableRow key={`${crypto.s}-${crypto.c}`}>
                 <TableCell><Checkbox /></TableCell>

@@ -6,7 +6,7 @@ interface AppDataContext {
   addedCryptos: Ticker24hKey
   addedCryptosRef: React.RefObject<Ticker24hKey>
   setAddedCryptos: Dispatch<SetStateAction<Ticker24hKey>>
-
+  oldAddedCryptosPriceRef: React.RefObject<string[]>
   selectedSymbol: Symbol
 }
 
@@ -24,6 +24,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
   const [socket, setSocket] = useState<WebSocket | null>(null)
 
   const addedCryptosRef = useRef<Ticker24hKey>({})
+  const oldAddedCryptosPriceRef = useRef<string[]>([])
   const updateInstantlyMessagesFlag = useRef(0)
 
   async function loadInitialData() {
@@ -41,11 +42,19 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     setSocket(new WebSocket(url))
   }
 
+  async function handleUpdateAddedCryptos() {
+    setAddedCryptos(prev => {
+      oldAddedCryptosPriceRef.current = Object.values(prev).map(c => c.c)
+      return { ...addedCryptosRef.current }
+    })
+
+    await chrome.storage.local.set<LocalStorageData>({ addedCryptos: addedCryptosRef.current });
+  }
+
   useEffect(() => {
     if (!socket) return
 
-    socket.onopen = (data) => {
-      console.log('connected: ', data)
+    socket.onopen = () => {
       updateInstantlyMessagesFlag.current = Object.keys(addedCryptos).length
     }
 
@@ -58,9 +67,8 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (updateInstantlyMessagesFlag.current === 0) {
-        console.log("update instantly")
         updateInstantlyMessagesFlag.current--
-        setAddedCryptos({ ...addedCryptosRef.current })
+        handleUpdateAddedCryptos()
       }
     }
 
@@ -71,9 +79,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     loadInitialData()
     startWSNewConnection(["btcusdt"])
 
-    const interval = setInterval(() => {
-      setAddedCryptos({ ...addedCryptosRef.current })
-    }, 6000);
+    const interval = setInterval(handleUpdateAddedCryptos, 6000);
 
     return () => {
       clearInterval(interval)
@@ -86,7 +92,8 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       selectedSymbol,
       addedCryptos,
       setAddedCryptos,
-      addedCryptosRef
+      addedCryptosRef,
+      oldAddedCryptosPriceRef
     }}>
       {children}
     </AppDataContext.Provider>
