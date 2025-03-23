@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 
 
 export function Header() {
-  const { symbols } = useAppData()
+  const { availableSymbols } = useAppData()
 
   return (
     <header className="flex p-2 items-center gap-2 border-b">
@@ -16,7 +16,7 @@ export function Header() {
 
         <SelectContent>
           {
-            symbols.map(f =>
+            availableSymbols.map(f =>
               <SelectItem key={f} value={f}>{f}</SelectItem>
             )
           }

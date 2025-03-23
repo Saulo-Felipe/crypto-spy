@@ -1,5 +1,3 @@
-import { symbols } from "@/context/app-data";
-
 export interface Ticker24hr {
   e: string;  // Event type
   E: number;  // Event time (timestamp)
@@ -33,9 +31,17 @@ export interface MessageTicker24h {
 
 export type Ticker24hKey = { [key: string]: Ticker24hr }
 
-export type Symbol = typeof symbols[number]
+export type Symbol = string
+
+// type UpdateTime = {
+//   lastUpdate: number
+// }
 
 export interface LocalStorageData {
   addedCryptos: Ticker24hKey
   selectedSymbol: Symbol
+  availableSymbols: {
+    data: Symbol[]
+    lastUpdate: number
+  }
 }

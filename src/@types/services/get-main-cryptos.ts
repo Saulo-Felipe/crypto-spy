@@ -11,13 +11,3 @@ export interface TickerData {
   quoteVolume: string;
   count: string;
 }
-
-export interface ParComVolume {
-  symbol: string;
-  websocketStream: string;
-  baseAsset: string;
-  quoteAsset: string;
-  volume: number;
-  quoteVolume: number;
-  tradeCount: number;
-}
