@@ -33,6 +33,11 @@ export type Ticker24hKey = { [key: string]: Ticker24hr }
 
 export type Symbol = string
 
+export type AvailableSymbols = {
+  data: Symbol[]
+  lastUpdate: number
+}
+
 // type UpdateTime = {
 //   lastUpdate: number
 // }
@@ -40,8 +45,5 @@ export type Symbol = string
 export interface LocalStorageData {
   addedCryptos: Ticker24hKey
   selectedSymbol: Symbol
-  availableSymbols: {
-    data: Symbol[]
-    lastUpdate: number
-  }
+  availableSymbols: AvailableSymbols
 }

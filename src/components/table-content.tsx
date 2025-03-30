@@ -12,7 +12,7 @@ export function TableContent() {
     <Table>
       <TableCaption>Criptomoedas salvas</TableCaption>
 
-      <TableHeader>
+      <TableHeader className="sticky top-0 bg-secondary">
         <TableRow>
           <TableHead><EllipsisIcon /></TableHead>
           <TableHead>Nome</TableHead>
@@ -21,7 +21,9 @@ export function TableContent() {
         </TableRow>
       </TableHeader>
 
-      <TableBody>
+      //ficou faltando resolver o scroll
+
+      <TableBody className="overflow-y-auto max-h-[200px]">
         {
           Object.values(addedCryptos).map((crypto, i) => {
             const oldPrice = oldAddedCryptosPriceRef.current[i]
@@ -33,10 +35,13 @@ export function TableContent() {
                   "price-up": crypto.c > oldPrice,
                   "price-down": crypto.c < oldPrice
                 })}>
-                  {new Intl.NumberFormat('en-US', {
-                    style: 'currency',
-                    currency: 'USD'
-                  }).format(Number(crypto.c))}
+                  {crypto.c
+                    ? new Intl.NumberFormat('en-US', {
+                      style: 'currency',
+                      currency: 'USD'
+                    }).format(Number(crypto.c))
+                    : "Carregando..."
+                  }
                 </TableCell>
                 <TableCell className={cn({
                   "text-red-500": crypto.P < 0,

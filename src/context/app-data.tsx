@@ -9,6 +9,9 @@ interface AppDataContext {
   setAddedCryptos: Dispatch<SetStateAction<Ticker24hKey>>
   oldAddedCryptosPriceRef: React.RefObject<string[]>
   selectedSymbol: Symbol
+  startWSNewConnection: () => void
+  isLoading: boolean
+  setIsLoading: Dispatch<SetStateAction<boolean>>
 }
 
 const AppDataContext = createContext<AppDataContext>({} as AppDataContext)
@@ -18,9 +21,10 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
   const [selectedSymbol, setSelectedSymbol] = useState<Symbol>("USDT")
   const [socket, setSocket] = useState<WebSocket | null>(null)
   const [availableSymbols, setAvailableSymbols] = useState<string[]>([])
+  const [isLoading, setIsLoading] = useState(false)
 
   const addedCryptosRef = useRef<Ticker24hKey>({})
-  const oldAddedCryptosPriceRef = useRef<string[]>([])
+  const oldAddedCryptosPriceRef = useRef<string[]>([]) // comparar os preços de antes e depois, para realizar a animação
   const updateInstantlyMessagesFlag = useRef(0)
 
   async function loadInitialData() {
@@ -35,18 +39,24 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
 
     setAddedCryptos(chromeLocal.addedCryptos)
     setSelectedSymbol(chromeLocal.selectedSymbol)
+    addedCryptosRef.current = chromeLocal.addedCryptos
 
     if (Date.now() - chromeLocal.availableSymbols.lastUpdate > 86_400_000) {
       const data = await getMainAvailableCryptos()
-      await chrome.storage.local.set({ availableSymbols: { data, lastUpdate: Date.now() } })
+      await chrome.storage.local.set<LocalStorageData>({
+        availableSymbols: {
+          data, lastUpdate: Date.now()
+        }
+      })
       return setAvailableSymbols(data)
     }
 
     setAvailableSymbols(chromeLocal.availableSymbols.data)
   };
 
-  async function startWSNewConnection(streams: string[]) {
-    const url = `wss://stream.binance.com:9443/stream?streams=${streams.map(s => `${s}@ticker`).join("/")}`
+  async function startWSNewConnection() {
+    const streams = Object.keys(addedCryptosRef.current)
+    const url = `wss://stream.binance.com:9443/stream?streams=${streams.map(s => `${s}`).join("/")}`
     setSocket(new WebSocket(url))
   }
 
@@ -67,6 +77,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     if (!socket) return
 
     socket.onopen = () => {
+      console.log("[open new connection]")
       updateInstantlyMessagesFlag.current = Object.keys(addedCryptos).length
     }
 
@@ -81,6 +92,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       if (updateInstantlyMessagesFlag.current === 0) {
         updateInstantlyMessagesFlag.current--
         handleUpdateAddedCryptos()
+        setIsLoading(false)
       }
     }
 
@@ -88,8 +100,10 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
   }, [socket])
 
   useEffect(() => {
-    loadInitialData()
-    startWSNewConnection(["btcusdt"])
+    (async () => {
+      await loadInitialData()
+      await startWSNewConnection()
+    })();
 
     const interval = setInterval(handleUpdateAddedCryptos, 6000);
 
@@ -105,7 +119,10 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       addedCryptos,
       setAddedCryptos,
       addedCryptosRef,
-      oldAddedCryptosPriceRef
+      oldAddedCryptosPriceRef,
+      startWSNewConnection,
+      isLoading,
+      setIsLoading
     }}>
       {children}
     </AppDataContext.Provider>

@@ -1,6 +1,7 @@
+import { LocalStorageData, Ticker24hr } from "@/@types/components/table-content";
 import { useAppData } from "@/context/app-data";
 import { cn } from "@/lib/utils";
-import { CheckIcon, ChevronDownIcon, PlusIcon, SettingsIcon } from "lucide-react";
+import { CheckIcon, ChevronDownIcon, LoaderCircleIcon, PlusIcon, SettingsIcon } from "lucide-react";
 import { useState } from "react";
 import { Button } from "./ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "./ui/command";
@@ -8,24 +9,47 @@ import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { ScrollArea, ScrollBar } from "./ui/scroll-area";
 
 export function Header() {
-  const { availableSymbols } = useAppData();
-  const [selectedItem, setSelectedItem] = useState<string | null>(null)
+  const { availableSymbols, addedCryptosRef, startWSNewConnection, isLoading, setIsLoading } = useAppData();
+  const [selectedCrypto, setSelectedCryto] = useState<string | null>(null)
   const [isComboxOpen, setIsComboxOpen] = useState(false)
 
-  function handleAddNewCrypto() {
+  async function handleAddNewCrypto() {
+    // lembrar de tratar as cryptos invaldias
+    if (selectedCrypto) {
+      setIsLoading(true)
+      setSelectedCryto(null)
 
+      const cryptoKey = `${selectedCrypto}@ticker`.toLowerCase()
+
+      const newdata = {
+        addedCryptos: {
+          ...addedCryptosRef.current,
+          [cryptoKey]: {
+            s: selectedCrypto,
+            P: 0
+          } as Ticker24hr
+        }
+      }
+
+      addedCryptosRef.current = newdata.addedCryptos
+      await chrome.storage.local.set<LocalStorageData>(newdata)
+      startWSNewConnection()
+    }
   }
 
   return (
     <header className="flex p-2 items-center gap-2 border-b">
       <Popover open={isComboxOpen} onOpenChange={setIsComboxOpen}>
-        <PopoverTrigger className="flex-1">
+        <PopoverTrigger
+          className="flex-1 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+          disabled={isLoading}
+        >
           <Button variant={"outline"} className={cn("w-full text-start justify-between font-normal", {
-            'opacity-50': !selectedItem
+            'opacity-50': !selectedCrypto
           })}>
             {
-              selectedItem
-                ? selectedItem
+              selectedCrypto
+                ? selectedCrypto
                 : "Selecione uma crypto"
             }
             <ChevronDownIcon />
@@ -46,7 +70,7 @@ export function Header() {
                         key={symbol}
                         value={symbol}
                         onSelect={(currentValue) => {
-                          setSelectedItem(currentValue)
+                          setSelectedCryto(currentValue)
                           setIsComboxOpen(false)
                         }}
                       >
@@ -54,7 +78,7 @@ export function Header() {
                         <CheckIcon
                           className={cn(
                             "ml-auto",
-                            selectedItem === symbol ? "opacity-100" : "opacity-0"
+                            selectedCrypto === symbol ? "opacity-100" : "opacity-0"
                           )}
                         />
                       </CommandItem>
@@ -72,11 +96,15 @@ export function Header() {
 
       <Button
         onClick={handleAddNewCrypto}
-        variant={"outline"}
-        disabled={!selectedItem}
-        className="disabled:opacity-30 disabled:cursor-not-allowed "
+        variant={selectedCrypto ? "default" : "outline"}
+        disabled={!selectedCrypto || isLoading}
+        className="disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
       >
-        <PlusIcon />
+        {
+          isLoading
+            ? <LoaderCircleIcon className="animate-spin size-4" />
+            : <PlusIcon />
+        }
       </Button>
 
       <Button variant={"outline"}>
