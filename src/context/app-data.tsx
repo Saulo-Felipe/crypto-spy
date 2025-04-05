@@ -9,7 +9,7 @@ interface AppDataContext {
   setAddedCryptos: Dispatch<SetStateAction<Ticker24hKey>>
   oldAddedCryptosPriceRef: React.RefObject<string[]>
   selectedSymbol: Symbol
-  startWSNewConnection: () => void
+  updateSocketCryptoConnections: () => void
   isLoading: boolean
   setIsLoading: Dispatch<SetStateAction<boolean>>
 }
@@ -54,7 +54,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     setAvailableSymbols(chromeLocal.availableSymbols.data)
   };
 
-  async function startWSNewConnection() {
+  async function updateSocketCryptoConnections() {
     const streams = Object.keys(addedCryptosRef.current)
     const url = `wss://stream.binance.com:9443/stream?streams=${streams.map(s => `${s}`).join("/")}`
     setSocket(new WebSocket(url))
@@ -102,7 +102,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     (async () => {
       await loadInitialData()
-      await startWSNewConnection()
+      await updateSocketCryptoConnections()
     })();
 
     const interval = setInterval(handleUpdateAddedCryptos, 6000);
@@ -120,7 +120,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       setAddedCryptos,
       addedCryptosRef,
       oldAddedCryptosPriceRef,
-      startWSNewConnection,
+      updateSocketCryptoConnections,
       isLoading,
       setIsLoading
     }}>

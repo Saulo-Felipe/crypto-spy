@@ -9,7 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { ScrollArea, ScrollBar } from "./ui/scroll-area";
 
 export function Header() {
-  const { availableSymbols, addedCryptosRef, startWSNewConnection, isLoading, setIsLoading } = useAppData();
+  const { availableSymbols, addedCryptosRef, updateSocketCryptoConnections, isLoading, setIsLoading } = useAppData();
   const [selectedCrypto, setSelectedCryto] = useState<string | null>(null)
   const [isComboxOpen, setIsComboxOpen] = useState(false)
 
@@ -33,7 +33,7 @@ export function Header() {
 
       addedCryptosRef.current = newdata.addedCryptos
       await chrome.storage.local.set<LocalStorageData>(newdata)
-      startWSNewConnection()
+      updateSocketCryptoConnections()
     }
   }
 
