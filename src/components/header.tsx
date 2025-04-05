@@ -65,24 +65,26 @@ export function Header() {
                 <CommandEmpty>Nenhuma crypto disponível</CommandEmpty>
                 <CommandGroup>
                   {
-                    availableSymbols.map(symbol => (
-                      <CommandItem
-                        key={symbol}
-                        value={symbol}
-                        onSelect={(currentValue) => {
-                          setSelectedCryto(currentValue)
-                          setIsComboxOpen(false)
-                        }}
-                      >
-                        {symbol}
-                        <CheckIcon
-                          className={cn(
-                            "ml-auto",
-                            selectedCrypto === symbol ? "opacity-100" : "opacity-0"
-                          )}
-                        />
-                      </CommandItem>
-                    ))
+                    availableSymbols
+                      .filter(symbol => addedCryptosRef.current[`${symbol}@ticker`.toLowerCase()] === undefined)
+                      .map(symbol => (
+                        <CommandItem
+                          key={symbol}
+                          value={symbol}
+                          onSelect={(currentValue) => {
+                            setSelectedCryto(currentValue)
+                            setIsComboxOpen(false)
+                          }}
+                        >
+                          {symbol}
+                          <CheckIcon
+                            className={cn(
+                              "ml-auto",
+                              selectedCrypto === symbol ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                        </CommandItem>
+                      ))
                   }
                 </CommandGroup>
 
