@@ -1,7 +1,7 @@
 import { LocalStorageData, Ticker24hr } from "@/@types/components/table-content";
 import { useAppData } from "@/context/app-data";
 import { cn } from "@/lib/utils";
-import { CheckIcon, ChevronDownIcon, LoaderCircleIcon, PlusIcon, SettingsIcon } from "lucide-react";
+import { CheckIcon, ChevronDownIcon, LoaderCircleIcon, PlusIcon } from "lucide-react";
 import { useState } from "react";
 import { Button } from "./ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "./ui/command";
@@ -109,9 +109,9 @@ export function Header() {
         }
       </Button>
 
-      <Button variant={"outline"}>
+      {/* <Button variant={"outline"}>
         <SettingsIcon />
-      </Button>
+      </Button> */}
     </header>
   );
 }
