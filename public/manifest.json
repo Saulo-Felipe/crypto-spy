@@ -9,5 +9,8 @@
   "permissions": [
     "scripting",
     "storage"
-  ]
+  ],
+  "icons": {
+    "128": "./icons/cryptospy-128x128.png"
+  }
 }
