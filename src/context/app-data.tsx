@@ -55,9 +55,11 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
   };
 
   async function updateSocketCryptoConnections() {
-    const streams = Object.keys(addedCryptosRef.current)
-    const url = `wss://stream.binance.com:9443/stream?streams=${streams.map(s => `${s}`).join("/")}`
-    setSocket(new WebSocket(url))
+    if (Object.keys(addedCryptosRef.current).length > 0) {
+      const streams = Object.keys(addedCryptosRef.current)
+      const url = `wss://stream.binance.com:9443/stream?streams=${streams.map(s => `${s}`).join("/")}`
+      setSocket(new WebSocket(url))
+    }
   }
 
   async function handleUpdateAddedCryptos() {
